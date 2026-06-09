@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  baileys-api:
+    image: ${DOCKER_USERNAME:-yourusername}/tg2wa-baileys-api:latest
+    container_name: baileys-api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount direktori penyimpanan sesi
+      - ./auth_info:/app/auth_info
+    environment:
+      - NODE_ENV=production
+
+  telegram-bridge:
+    image: ${DOCKER_USERNAME:-yourusername}/tg2wa-telegram-bridge:latest
+    container_name: telegram-bridge
+    restart: unless-stopped
+    depends_on:
+      - baileys-api
+    volumes:
+      # Mount konfigurasi dan data sesi
+      - ./config:/app/config
+      - ./logs:/app/logs
+      - ./downloads:/app/downloads
+      - ./Test Session.session:/app/Test Session.session

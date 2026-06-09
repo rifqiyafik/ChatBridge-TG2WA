@@ -1,0 +1,19 @@
+# Virtual Environment
+venv/
+
+# config file (sensitive data)
+config/config.py
+
+# test sessions
+*.session
+*.session-journal
+
+.DS_Store
+
+.idea/
+
+__pycache__/
+*.pyc
+
+downloads/
+logs/

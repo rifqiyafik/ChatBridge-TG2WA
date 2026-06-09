@@ -1,0 +1,47 @@
+{
+  "name": "whats-up",
+  "version": "1.5.1",
+  "description": "A robust, modular, and type-safe Node.js WebSocket & REST API for WhatsApp built with the Baileys library.",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc && tsc-alias --resolve-full-paths --resolve-full-extension .js",
+    "testbuild": "tsc --noEmit"
+  },
+  "keywords": [
+    "whatsapp",
+    "api",
+    "bot",
+    "baileys",
+    "typescript",
+    "websocket",
+    "socket.io",
+    "rest"
+  ],
+  "author": "Rifqi Yafik",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "@hapi/boom": "^10.0.1",
+    "@whiskeysockets/baileys": "^7.0.0-rc12",
+    "chalk": "^5.4.1",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.5.2",
+    "p-queue": "^9.3.0",
+    "pino": "^9.7.0",
+    "qrcode": "^1.5.4",
+    "qrcode-terminal": "^0.12.0",
+    "socket.io": "^4.8.3",
+    "tsx": "^4.22.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/qrcode-terminal": "^0.12.2",
+    "nodemon": "^3.1.14",
+    "socket.io-client": "^4.8.3",
+    "tsc-alias": "^1.8.17",
+    "typescript": "^6.0.3"
+  }
+}

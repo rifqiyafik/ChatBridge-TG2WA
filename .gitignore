@@ -1,0 +1,50 @@
+# TG2WA workspace ignore rules
+
+# Python environment and cache
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Node dependencies and build output
+node_modules/
+dist/
+
+# Local config and secrets
+.env
+.env.*
+config/config.py
+telegram-bridge/config/config.py
+
+# Telegram session files
+*.session
+*.session-journal
+telegram-bridge/*.session
+telegram-bridge/*.session-journal
+
+# WhatsApp/Baileys session files
+auth_info/
+sessions/
+whatsapp-api/auth_info_baileys/
+whatsapp-api/sessions/
+
+# Runtime output
+logs/
+downloads/
+telegram-bridge/logs/
+telegram-bridge/downloads/
+
+# Editor and OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local agent/plugin metadata
+.agents/
+skills-lock.json
+
+# deployment guide
+DEPLOYMENT_GUIDE.md
+

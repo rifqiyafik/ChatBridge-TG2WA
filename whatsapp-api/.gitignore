@@ -1,0 +1,9 @@
+node_modules/
+sessions/
+auth_info/
+.idea/
+dist/
+.env
+private/
+.agents/
+skills-lock.json
