@@ -1,11 +1,22 @@
+from pathlib import Path
+
+
+BASE_DIR = Path(__file__).resolve().parents[1]
+
 # Your Telegram API ID
 api_id = ""
 # Your Telegram API hash
 api_hash = ""
-# The username or ID of the Telegram chat/group/channel you want to listen from
-telegram_chat = ""
+
+# The usernames or IDs of the Telegram chats/groups/channels you want to listen from.
+telegram_chats = [
+    # -1001234567890,
+]
+telegram_chat = telegram_chats
+
 # The WhatsApp chat/group ID you want to send the message to. ex: 123456789@s.whatsapp.net
 jid = ""
-# This is where the downloaded media will go, you can replace this with your respective path (optional and recommended),
-# or you can just hardcode your path in media_handler.py
-media_path = ""
+whatsapp_api_url = "http://localhost:3000/send-message"
+
+# This is where the downloaded Telegram media will go.
+media_path = str(BASE_DIR / "downloads" / "telegram_media")

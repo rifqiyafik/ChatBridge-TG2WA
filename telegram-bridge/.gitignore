@@ -3,10 +3,13 @@ venv/
 
 # config file (sensitive data)
 config/config.py
+config/bot_config.py
 
 # test sessions
 *.session
 *.session-journal
+Admin Bot.session
+Admin Bot.session-journal
 
 .DS_Store
 
@@ -18,3 +21,4 @@ __pycache__/
 downloads/
 logs/
 tmp/
+data/

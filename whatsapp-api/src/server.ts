@@ -6,7 +6,7 @@ import rateLimit from "express-rate-limit";
 import authRoutes from "@/routes/auth.routes";
 import messageRoutes from "@/routes/message.routes";
 import groupRoutes from "@/routes/group.routes";
-import { loginController, logoutController } from "@/controllers/auth.controller";
+import { loginController, logoutController, qrController } from "@/controllers/auth.controller";
 import { sendMessageController } from "@/controllers/message.controller";
 import { getGroupsMin } from "@/controllers/group.controller";
 import { initializeSocketServer } from "@/socket";
@@ -44,6 +44,7 @@ function createExpressApp() {
   app.use("/api/v2/group", groupRoutes);
 
   app.post("/connect", loginController);
+  app.get("/qr", qrController);
   app.delete("/logout", logoutController);
   app.post("/send-message", sendMessageController);
   app.get("/groups", getGroupsMin);

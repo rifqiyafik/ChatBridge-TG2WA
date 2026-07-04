@@ -61,12 +61,19 @@ telegram-bridge/
   README.md
   Dockerfile
   requirements.txt
+  admin_bot.py
+  admin_services.py
+  config_store.py
   main.py
   media_handler.py
   whatsapp_sender.py
   config/
     config.py                 Konfigurasi aktif, jangan dipublikasi
     config_example.py         Template konfigurasi
+    bot_config.py             Konfigurasi aktif admin bot, jangan dipublikasi
+    bot_config_example.py     Template konfigurasi admin bot
+  data/
+    admin_state.json          State hasil set source/target dari bot
   scripts/
     list_telegram_chats.py    Menampilkan ID chat Telegram
     reset_sessions.py         Reset session Telegram/WhatsApp
@@ -217,6 +224,75 @@ Telegram client connected
 Telegram source resolved
 Waiting for new messages
 ```
+
+## Admin Bot Telegram
+
+`admin_bot.py` menyediakan kontrol bridge dari Telegram bot. Bot ini memakai akun bot dari BotFather, sedangkan akun Telegram bridge tetap memakai session `Test Session.session`.
+
+Salin konfigurasi bot:
+
+```powershell
+Copy-Item config\bot_config_example.py config\bot_config.py
+```
+
+Isi:
+
+```python
+bot_token = "BOT_TOKEN_DARI_BOTFATHER"
+
+admin_user_ids = [
+    123456789,
+]
+
+primary_admin_user_id = 123456789
+whatsapp_api_base_url = "http://localhost:3000"
+list_limit = 30
+```
+
+Jalankan bot:
+
+```powershell
+.\venv\Scripts\python.exe admin_bot.py
+```
+
+Command utama:
+
+```text
+/status
+/request [alasan]
+/admins
+/approve_admin <user_id>
+/reject_admin <user_id>
+/tg_login <phone>
+/tg_groups
+/tg_sources
+/tg_add_source <chat_id> [nama]
+/tg_remove_source <chat_id>
+/tg_logout
+/wa_login <phone>
+/wa_groups
+/wa_set_group <jid> [nama]
+/wa_logout
+/logout_all
+```
+
+Flow penuh dari bot:
+
+1. Jalankan `whatsapp-api`.
+2. Jalankan `admin_bot.py`.
+3. Kirim `/tg_login +628xxxxxxxxxx` ke bot, lalu balas kode Telegram dan password 2FA jika diminta.
+4. Kirim `/tg_groups`, pilih ID chat/group/channel, lalu `/tg_add_source <chat_id>`.
+5. Kirim `/wa_login 628xxxxxxxxxx`, masukkan pairing code di aplikasi WhatsApp.
+6. Kirim `/wa_groups`, pilih JID grup, lalu `/wa_set_group <jid>`.
+7. Jalankan `main.py` untuk mulai forwarding.
+
+Catatan keamanan:
+
+- Hanya user ID dalam `admin_user_ids` yang bisa memakai bot.
+- Admin tambahan bisa meminta akses dengan `/request`; admin utama menerima notifikasi dan dapat menjalankan `/approve_admin <user_id>` atau `/reject_admin <user_id>`.
+- `primary_admin_user_id` adalah satu-satunya admin yang dapat approve/reject admin baru. Jika kosong, admin pertama di `admin_user_ids` dipakai sebagai admin utama.
+- OTP Telegram dan password 2FA dikirim melalui chat bot saat login penuh dari bot. Pakai hanya pada bot private/admin.
+- Jangan upload `config/bot_config.py`, `Admin Bot.session`, `Test Session.session`, dan folder `data/`.
 
 ## Payload yang Dikirim ke WhatsApp API
 

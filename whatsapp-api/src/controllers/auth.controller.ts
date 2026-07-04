@@ -1,4 +1,4 @@
-import { connectToWA, isConnected, logout, requestPairingCodeForPhone } from "@/whatsappClient";
+import { connectToWA, isConnected, logout, requestPairingCodeForPhone, getQR } from "@/whatsappClient";
 import { Request, Response } from "express";
 import { sendSuccess, sendError } from "@/utils/response";
 
@@ -48,4 +48,15 @@ export async function logoutController(req: Request, res: Response) {
         console.error("Logout error:", error);
         return sendError(res, "Failed to log out from WhatsApp.", undefined, 500);
     }
+}
+
+export async function qrController(req: Request, res: Response) {
+    if (isConnected()) {
+        return sendError(res, "Already connected to WhatsApp.", undefined, 400);
+    }
+    const qr = getQR();
+    if (qr) {
+        return sendSuccess(res, "QR retrieved successfully.", { qr });
+    }
+    return sendError(res, "No QR available. Request a new connection.", undefined, 404);
 }

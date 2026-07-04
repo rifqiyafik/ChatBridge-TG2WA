@@ -16,12 +16,15 @@ dist/
 .env.*
 config/config.py
 telegram-bridge/config/config.py
+telegram-bridge/config/bot_config.py
 
 # Telegram session files
 *.session
 *.session-journal
 telegram-bridge/*.session
 telegram-bridge/*.session-journal
+telegram-bridge/Admin Bot.session
+telegram-bridge/Admin Bot.session-journal
 
 # WhatsApp/Baileys session files
 auth_info/
@@ -36,6 +39,7 @@ tmp/
 telegram-bridge/logs/
 telegram-bridge/downloads/
 telegram-bridge/tmp/
+telegram-bridge/data/
 
 # Editor and OS files
 .idea/
@@ -49,4 +53,3 @@ skills-lock.json
 
 # deployment guide
 DEPLOYMENT_GUIDE.md
-

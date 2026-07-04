@@ -30,6 +30,7 @@ Telegram chat/group/channel
 - Media Telegram tersimpan rapi di `downloads/telegram_media`.
 - Retry otomatis jika WhatsApp API sempat belum connected.
 - Utility reset session untuk ganti akun Telegram atau nomor WhatsApp.
+- Admin bot Telegram untuk login Telegram bridge, pairing WhatsApp, list grup, set source/target, dan logout session.
 - Logging ke terminal dan `logs/bridge.log`.
 
 ## Struktur Folder
