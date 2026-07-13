@@ -4,7 +4,7 @@ from pathlib import Path
 
 from loguru import logger
 from telethon import TelegramClient, events
-from telethon.errors import SessionPasswordNeededError
+from telethon.errors import SessionPasswordNeededError, PhoneCodeInvalidError, PhoneCodeExpiredError
 
 try:
     from config import bot_config
@@ -49,7 +49,9 @@ logger.remove()
 logger.add(sys.stderr, level="INFO", format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level}</level> | {message}")
 logger.add(LOG_DIR / "admin_bot.log", rotation="5 MB", retention="7 days", level="DEBUG", encoding="utf-8")
 
-ADMIN_SESSION = str(PROJECT_ROOT / "Admin Bot")
+SESSIONS_DIR = PROJECT_ROOT / "sessions"
+SESSIONS_DIR.mkdir(exist_ok=True)
+ADMIN_SESSION = str(SESSIONS_DIR / "Admin Bot")
 bot = TelegramClient(ADMIN_SESSION, load_runtime_config().api_id, load_runtime_config().api_hash)
 pending = {}
 
@@ -160,8 +162,10 @@ async def get_status_text():
     tg_ok = await is_telegram_authorized()
     
     wa_status_icon = "🔴 Terputus"
+    wa_groups = []
     try:
-        WhatsAppApi(whatsapp_api_base_url).list_groups()
+        response = WhatsAppApi(whatsapp_api_base_url).list_groups()
+        wa_groups = response.get("data") or []
         wa_status_icon = "🟢 Terhubung"
     except Exception as exc:
         pass
@@ -173,9 +177,20 @@ async def get_status_text():
     
     state = load_state()
     if wa_target_jid:
+        wa_target_name = None
         wa_target_state = state.get("whatsapp_target") or {}
         if str(wa_target_state.get("id")) == str(wa_target_jid) and wa_target_state.get("name"):
-            wa_target = f"{wa_target} ({wa_target_state['name']})"
+            wa_target_name = wa_target_state["name"]
+            
+        if not wa_target_name and wa_groups:
+            for g in wa_groups:
+                if str(g.get("id")) == str(wa_target_jid):
+                    wa_target_name = g.get("name")
+                    break
+                    
+        if wa_target_name:
+            wa_target = wa_target_name
+            
     if not wa_target_jid:
         wa_target = "Belum diatur ⚠️"
         
@@ -232,7 +247,7 @@ def format_rows(rows, *, title, id_key="id", name_key="name", type_key=None, lim
     lines = [f"{title} ({len(rows)} total, showing {len(visible)}):"]
     for row in visible:
         kind = f" [{row.get(type_key)}]" if type_key and row.get(type_key) else ""
-        lines.append(f"- {row.get(id_key)}{kind} - {row.get(name_key) or '-'}")
+        lines.append(f"- `{row.get(id_key)}`{kind} - {row.get(name_key) or '-'}")
 
     if len(rows) > len(visible):
         lines.append(f"... {len(rows) - len(visible)} more not shown.")
@@ -344,7 +359,8 @@ async def handle_pending(event, user_id, text):
         return True
 
     if state["action"] == "tg_code":
-        code = text.replace(" ", "").strip()
+        # Extract only digits from the text to allow spaces or prefix text
+        code = "".join(c for c in text if c.isdigit())
         client = state["client"]
         try:
             await client.sign_in(
@@ -358,9 +374,14 @@ async def handle_pending(event, user_id, text):
         except SessionPasswordNeededError:
             state["action"] = "tg_password"
             await respond(event, "Akun memakai 2FA. Kirim password Telegram 2FA.")
+        except PhoneCodeInvalidError:
+            await respond(event, "❌ Kode yang Anda masukkan salah. Silakan periksa kembali dan kirimkan kode yang benar. (Gunakan /cancel untuk membatalkan)")
+        except PhoneCodeExpiredError:
+            pending.pop(user_id, None)
+            await respond(event, "❌ Kode sudah kedaluwarsa. Silakan ulangi proses login dari awal dengan /tg_login.")
         except Exception as exc:
             logger.exception("Telegram code login failed")
-            await respond(event, f"Telegram login gagal: {exc}")
+            await respond(event, f"Telegram login gagal: {exc}. Silakan coba lagi atau gunakan /cancel.")
         return True
 
     if state["action"] == "tg_password":
@@ -468,7 +489,15 @@ async def start_telegram_login(event, phone):
         "phone": phone,
         "phone_code_hash": sent.phone_code_hash,
     }
-    await respond(event, "Kode Telegram sudah dikirim. Balas dengan kode login. Gunakan /cancel untuk batal.")
+    await respond(
+        event,
+        "Kode Telegram sudah dikirim.\n\n"
+        "⚠️ **PENTING (KEAMANAN TELEGRAM):**\n"
+        "Agar Telegram **tidak memblokir** kode login Anda secara otomatis (karena dideteksi dibagikan dalam chat), "
+        "**mohon kirimkan kode tersebut dengan spasi di antara setiap angka**.\n\n"
+        "Contoh: jika kode Anda adalah `12345`, balas dengan: `1 2 3 4 5`.\n\n"
+        "Gunakan /cancel untuk membatalkan."
+    )
 
 
 @bot.on(events.NewMessage)

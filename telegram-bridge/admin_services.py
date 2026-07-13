@@ -10,10 +10,13 @@ from config_store import PROJECT_ROOT
 
 WORKSPACE_ROOT = PROJECT_ROOT.parent
 WHATSAPP_ROOT = WORKSPACE_ROOT / "whatsapp-api"
-TELEGRAM_SESSION_NAME = str(PROJECT_ROOT / "Test Session")
+SESSIONS_DIR = PROJECT_ROOT / "sessions"
+SESSIONS_DIR.mkdir(exist_ok=True)
+ADMIN_SESSION = str(SESSIONS_DIR / "Admin Bot")
+TELEGRAM_SESSION_NAME = str(SESSIONS_DIR / "Test Session")
 TELEGRAM_SESSION_FILES = [
-    PROJECT_ROOT / "Test Session.session",
-    PROJECT_ROOT / "Test Session.session-journal",
+    SESSIONS_DIR / "Test Session.session",
+    SESSIONS_DIR / "Test Session.session-journal",
 ]
 WHATSAPP_AUTH_DIR = WHATSAPP_ROOT / "auth_info"
 REQUEST_TIMEOUT_SECONDS = 30
@@ -51,12 +54,24 @@ def make_user_client():
 
 
 async def is_telegram_authorized():
+    session_file = Path(TELEGRAM_SESSION_FILES[0])
+    if not session_file.exists() or session_file.stat().st_size == 0:
+        return False
     client = make_user_client()
-    await client.connect()
     try:
+        await client.connect()
         return await client.is_user_authorized()
+    except Exception as e:
+        if "locked" in str(e).lower():
+            # If the database is locked, the bridge container is running and using it,
+            # which means the session is active and authorized!
+            return True
+        raise
     finally:
-        await client.disconnect()
+        try:
+            await client.disconnect()
+        except Exception:
+            pass
 
 
 async def list_telegram_dialogs(limit=80):
@@ -90,12 +105,21 @@ async def list_telegram_dialogs(limit=80):
 
 async def logout_telegram():
     client = make_user_client()
-    await client.connect()
     try:
-        if await client.is_user_authorized():
-            await client.log_out()
-    finally:
-        await client.disconnect()
+        await client.connect()
+        try:
+            if await client.is_user_authorized():
+                await client.log_out()
+        finally:
+            await client.disconnect()
+    except Exception as e:
+        if "locked" in str(e).lower():
+            raise RuntimeError(
+                "Sesi Telegram sedang dikunci oleh proses Bridge.\n\n"
+                "Harap matikan service `telegram-bridge` terlebih dahulu di server "
+                "(contoh: `docker compose stop telegram-bridge`), lalu jalankan login kembali."
+            ) from e
+        raise
 
     deleted = []
     for path in TELEGRAM_SESSION_FILES:

@@ -10,7 +10,6 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      # Mount direktori penyimpanan sesi agar tidak terhapus saat container direstart
       - ./whatsapp-api/auth_info:/app/auth_info
     environment:
       - NODE_ENV=production
@@ -24,15 +23,24 @@ services:
     depends_on:
       - baileys-api
     volumes:
-      # Mount konfigurasi dan data sesi lokal ke dalam container
       - ./telegram-bridge/config:/app/config
       - ./telegram-bridge/logs:/app/logs
       - ./telegram-bridge/downloads:/app/downloads
-      # Mount file .session agar tidak perlu login telegram terus-menerus
-      # Pastikan nama file .session sesuai dengan nama di config Anda (contoh: my_session.session)
-      # Anda bisa menggunakan wildcard bind mount jika ingin me-mount seluruh folder session, 
-      # tapi amannya letakkan .session di folder root Bridge.
-      # Karena Docker compose agak sulit me-mount file tunggal yang belum ada, lebih baik mount folder.
-      # Solusi alternatif: pindahkan file .session ke dalam folder config dan update path di kode Python Anda.
-      # Untuk saat ini, kita mount file spesifik (Pastikan file ini ADA di host sebelum docker-compose up)
-      - ./telegram-bridge/Test Session.session:/app/Test Session.session
+      # File .session Telegram bridge disimpan di subfolder sessions/
+      - ./telegram-bridge/sessions:/app/sessions
+
+  telegram-admin-bot:
+    build: 
+      context: ./telegram-bridge
+    image: tg2wa-telegram-bridge:latest
+    container_name: telegram-admin-bot
+    restart: unless-stopped
+    command: python admin_bot.py
+    depends_on:
+      - baileys-api
+    volumes:
+      - ./telegram-bridge/config:/app/config
+      - ./telegram-bridge/logs:/app/logs
+      - ./telegram-bridge/downloads:/app/downloads
+      # Berbagi folder sessions yang sama dengan telegram-bridge
+      - ./telegram-bridge/sessions:/app/sessions
